@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trader Dashboard | Digital Mandi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981; --primary-dark: #059669;
+            --dark: #064e3b; --accent: #fbbf24;
+            --text: #0f172a; --muted: #64748b;
+            --light-bg: #f0fdf4; --border: #e2e8f0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; color:var(--text); }
+
+        /* ─── BLOBS ─── */
+        .blob-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+        .blob { position:absolute; border-radius:50%; filter:blur(70px); opacity:0.12; animation:blobFloat 10s ease-in-out infinite; }
+        .blob-1 { width:500px; height:500px; background:#10b981; top:-120px; left:-150px; animation-duration:10s; }
+        .blob-2 { width:350px; height:350px; background:#059669; top:30%; right:-80px; animation-delay:2s; animation-duration:13s; }
+        .blob-3 { width:260px; height:260px; background:#34d399; bottom:10%; left:5%; animation-delay:4s; animation-duration:9s; }
+        .blob-4 { width:300px; height:300px; background:#064e3b; bottom:-80px; right:20%; animation-delay:1s; animation-duration:12s; }
+        .blob-5 { width:200px; height:200px; background:#6ee7b7; top:50%; left:40%; animation-delay:3s; animation-duration:8s; }
+        @keyframes blobFloat {
+            0%,100% { transform:translate(0,0) scale(1); }
+            33% { transform:translate(18px,-28px) scale(1.04); }
+            66% { transform:translate(-14px,18px) scale(0.96); }
+        }
+
+        /* NAVBAR */
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:0 5%; height:65px;
+            background:rgba(255,255,255,0.92); backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(16,185,129,0.15);
+            position:sticky; top:0; z-index:100;
+        }
+        .logo { font-size:1.3rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; }
+        .leaf-d { width:32px;height:32px;background:var(--primary);color:white;border-radius:8px 16px 8px 16px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem; }
+        .nav-right { display:flex; align-items:center; gap:14px; }
+        .nav-user { font-size:0.88rem; color:var(--muted); font-weight:500; }
+        .nav-user span { color:#3b82f6; font-weight:700; }
+        .btn-logout { background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; padding:8px 16px; border-radius:10px; font-size:0.85rem; font-weight:600; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-logout:hover { background:#dc2626; color:white; }
+
+        /* MAIN */
+        .main { padding:28px 5%; max-width:1300px; margin:0 auto; position:relative; z-index:1; }
+
+        /* STATS */
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+        .stat-card {
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(10px);
+            border-radius:14px; padding:18px;
+            border:1px solid rgba(16,185,129,0.12);
+            box-shadow:0 2px 12px rgba(16,185,129,0.06);
+        }
+        .stat-card .s-label { font-size:0.78rem; color:var(--muted); font-weight:500; margin-bottom:6px; }
+        .stat-card .s-val { font-size:1.5rem; font-weight:800; color:var(--text); }
+        .stat-card .s-val span { font-size:0.85rem; color:var(--primary); }
+
+        /* SEARCH BAR */
+        .search-bar {
+            display:flex; gap:12px; align-items:center;
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(10px);
+            padding:16px 20px; border-radius:16px;
+            border:1px solid rgba(16,185,129,0.12); margin-bottom:22px; flex-wrap:wrap;
+            box-shadow:0 2px 12px rgba(16,185,129,0.06);
+        }
+        .search-input {
+            flex:1; min-width:200px; padding:10px 14px;
+            border:1.5px solid var(--border); border-radius:10px;
+            font-size:0.9rem; outline:none; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif; color:var(--text);
+            background:rgba(248,250,252,0.8);
+        }
+        .search-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(16,185,129,0.08); }
+        .filter-select {
+            padding:10px 14px; border:1.5px solid var(--border); border-radius:10px;
+            font-size:0.88rem; outline:none; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif; color:var(--text);
+            background:rgba(255,255,255,0.9); cursor:pointer;
+        }
+        .filter-select:focus { border-color:var(--primary); }
+        .btn-refresh {
+            background:rgba(240,253,244,0.9); color:var(--primary-dark);
+            border:1.5px solid #bbf7d0; padding:10px 16px; border-radius:10px;
+            font-size:0.88rem; font-weight:600; cursor:pointer; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif; white-space:nowrap;
+        }
+        .btn-refresh:hover { background:#bbf7d0; }
+
+        /* SECTION HEADER */
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .section-title { font-size:1rem; font-weight:800; }
+        .crop-count { font-size:0.8rem; color:var(--muted); background:rgba(241,245,249,0.9); padding:4px 10px; border-radius:20px; font-weight:600; }
+
+        /* CROP GRID */
+        .crops-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:16px; }
+        .crop-card {
+            background:rgba(255,255,255,0.9); backdrop-filter:blur(10px);
+            border-radius:18px; padding:20px;
+            border:1px solid rgba(16,185,129,0.12);
+            box-shadow:0 2px 12px rgba(16,185,129,0.06);
+            transition:0.2s; display:flex; flex-direction:column;
+        }
+        .crop-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); }
+        .crop-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+        .crop-emoji { font-size:2.4rem; }
+        .crop-badge { background:#dcfce7; color:#15803d; font-size:0.65rem; font-weight:700; padding:4px 10px; border-radius:20px; }
+        .crop-name { font-size:1.05rem; font-weight:800; margin-bottom:3px; }
+        .crop-farmer { font-size:0.78rem; color:var(--muted); margin-bottom:10px; }
+        .crop-info { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+        .info-pill { background:rgba(241,245,249,0.9); color:var(--text); font-size:0.75rem; font-weight:600; padding:4px 10px; border-radius:20px; }
+        .crop-price-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .crop-price { font-size:1.3rem; font-weight:800; color:var(--primary); }
+        .crop-unit { font-size:0.75rem; color:var(--muted); }
+        .crop-location { font-size:0.75rem; color:var(--muted); margin-bottom:14px; }
+
+        .btn-buy {
+            width:100%; background:var(--primary); color:white;
+            padding:12px; border-radius:11px; border:none;
+            font-size:0.88rem; font-weight:700; cursor:pointer; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif; margin-top:auto;
+            box-shadow:0 4px 12px rgba(16,185,129,0.25);
+        }
+        .btn-buy:hover { background:var(--primary-dark); box-shadow:0 6px 18px rgba(16,185,129,0.4); }
+
+        /* MY ORDERS */
+        .my-orders-section {
+            margin-top:28px;
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(12px);
+            border-radius:20px; padding:24px;
+            border:1px solid rgba(16,185,129,0.12);
+        }
+        .order-item { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid rgba(226,232,240,0.7); }
+        .order-item:last-child { border-bottom:none; }
+        .order-crop { font-weight:700; font-size:0.92rem; }
+        .order-detail { font-size:0.8rem; color:var(--muted); margin-top:3px; }
+        .order-total { font-weight:800; color:var(--primary); font-size:0.95rem; }
+        .order-badge { padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+        .badge-pending { background:#fef9c3; color:#854d0e; }
+        .badge-confirmed { background:#dcfce7; color:#15803d; }
+
+        /* MODAL */
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.45);
+            z-index:500; display:flex; align-items:center; justify-content:center;
+            opacity:0; pointer-events:none; transition:0.25s;
+        }
+        .modal-overlay.show { opacity:1; pointer-events:all; }
+        .modal {
+            background:white; border-radius:24px; padding:36px;
+            width:90%; max-width:440px;
+            box-shadow:0 24px 60px rgba(0,0,0,0.15);
+            transform:scale(0.95); transition:0.25s;
+        }
+        .modal-overlay.show .modal { transform:scale(1); }
+        .modal h3 { font-size:1.2rem; font-weight:800; margin-bottom:6px; }
+        .modal-sub { font-size:0.85rem; color:var(--muted); margin-bottom:22px; }
+        .modal-detail { background:#f8fafc; border-radius:12px; padding:16px; margin-bottom:20px; }
+        .modal-row { display:flex; justify-content:space-between; padding:6px 0; font-size:0.88rem; border-bottom:1px solid var(--border); }
+        .modal-row:last-child { border-bottom:none; }
+        .modal-row .label { color:var(--muted); }
+        .modal-row .val { font-weight:700; }
+        .modal-total { font-size:1.2rem; font-weight:800; text-align:center; color:var(--primary); margin:14px 0; }
+        .modal-btns { display:flex; gap:10px; }
+        .btn-cancel { flex:1; background:#f1f5f9; color:var(--muted); border:none; padding:13px; border-radius:11px; font-size:0.9rem; font-weight:600; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-confirm { flex:2; background:var(--primary); color:white; border:none; padding:13px; border-radius:11px; font-size:0.9rem; font-weight:700; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-confirm:hover { background:var(--primary-dark); }
+        .btn-confirm:disabled { opacity:0.7; cursor:not-allowed; }
+
+        /* EMPTY / LOADING */
+        .empty-state { text-align:center; padding:70px 20px; color:var(--muted); grid-column:1/-1; }
+        .empty-state .e-icon { font-size:3.5rem; margin-bottom:14px; display:block; }
+        .loading { text-align:center; padding:50px; color:var(--muted); font-size:0.9rem; grid-column:1/-1; }
+
+        /* TOAST */
+        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); padding:14px 24px; border-radius:12px; font-weight:600; font-size:0.9rem; z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none; backdrop-filter:blur(10px); }
+
+        @media(max-width:800px) { .stats-row { grid-template-columns:1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="blob-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+    <div class="blob blob-5"></div>
+</div>
+
+<nav>
+    <div class="logo"><div class="leaf-d">D</div>Digital <span style="color:var(--primary)">Mandi</span></div>
+    <div class="nav-right">
+        <span class="nav-user">🏪 Welcome, <span id="navUsername">Trader</span></span>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="main">
+    <div class="stats-row">
+        <div class="stat-card"><div class="s-label">Crops Available</div><div class="s-val" id="statTotal">0 <span>listings</span></div></div>
+        <div class="stat-card"><div class="s-label">Active Farmers</div><div class="s-val" id="statFarmers">0 <span>sellers</span></div></div>
+        <div class="stat-card"><div class="s-label">Lowest Price</div><div class="s-val" id="statLow">₹0 <span>/unit</span></div></div>
+        <div class="stat-card"><div class="s-label">My Orders</div><div class="s-val" id="statOrders">0 <span>placed</span></div></div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍  Search crops, farmer name, location...">
+        <select class="filter-select" id="categoryFilter">
+            <option value="">All Categories</option>
+            <option>Vegetables</option><option>Fruits</option><option>Grains</option>
+            <option>Spices</option><option>Pulses</option><option>Other</option>
+        </select>
+        <select class="filter-select" id="sortFilter">
+            <option value="newest">Newest First</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="qty_high">Qty: High to Low</option>
+        </select>
+        <button class="btn-refresh" onclick="loadCrops()">🔄 Refresh</button>
+    </div>
+
+    <div class="section-header">
+        <span class="section-title">🛒 Available Crops</span>
+        <span class="crop-count" id="cropCount">Loading...</span>
+    </div>
+    <div class="crops-grid" id="cropsGrid">
+        <div class="loading">🌾 Loading crops...</div>
+    </div>
+
+    <!-- My Orders -->
+    <div class="my-orders-section">
+        <div class="section-header">
+            <span class="section-title">📋 My Orders</span>
+            <span class="crop-count" id="myOrderCount">0 orders</span>
+        </div>
+        <div id="myOrdersContainer"><div class="loading">Loading your orders...</div></div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h3>🛒 Confirm Purchase</h3>
+        <p class="modal-sub">Review details and confirm your order</p>
+        <div class="modal-detail" id="modalDetail"></div>
+        <div class="modal-total" id="modalTotal"></div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-confirm" id="confirmBtn" onclick="confirmBuy()">✅ Confirm Order</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const emojiMap = {
+        tomato:'🍅', potato:'🥔', onion:'🧅', wheat:'🌾', rice:'🍚',
+        maize:'🌽', corn:'🌽', grapes:'🍇', broccoli:'🥦', spinach:'🥬',
+        chilli:'🌶️', mango:'🥭', banana:'🍌', apple:'🍎', orange:'🍊',
+        garlic:'🧄', carrot:'🥕', pea:'🫛', default:'🌿'
+    };
+    function getCropEmoji(name) {
+        const key = (name||'').toLowerCase().trim();
+        for (const [k, v] of Object.entries(emojiMap)) { if (key.includes(k)) return v; }
+        return emojiMap.default;
+    }
+
+    // ✅ AUTH GUARD
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    if (!token || !username || role !== 'trader') {
+        alert('Please login first!');
+        window.location.replace('/index.html');
+    }
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+            alert('Session expired! Please login again.');
+            localStorage.clear();
+            window.location.replace('/index.html');
+        }
+    } catch(e) {
+        localStorage.clear();
+        window.location.replace('/index.html');
+    }
+
+    document.getElementById('navUsername').textContent = username;
+
+    const authHeaders = { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token };
+
+    let allCrops = [];
+    let selectedCrop = null;
+
+    async function loadCrops() {
+        document.getElementById('cropsGrid').innerHTML = '<div class="loading">🌾 Loading crops...</div>';
+        try {
+            const res = await fetch('/api/crops/all', { headers: authHeaders });
+            if (res.status === 401 || res.status === 403) { logout(); return; }
+            allCrops = await res.json();
+            applyFilters();
+            updateStats(allCrops);
+        } catch(e) {
+            document.getElementById('cropsGrid').innerHTML = '<div class="empty-state"><span class="e-icon">⚠️</span><p>Could not load data. Check your connection.</p></div>';
+        }
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        const sort = document.getElementById('sortFilter').value;
+
+        let filtered = allCrops.filter(c => {
+            const matchSearch = !search || (c.name||'').toLowerCase().includes(search) || (c.farmerName||'').toLowerCase().includes(search) || (c.location||'').toLowerCase().includes(search);
+            const matchCat = !category || (c.category||'') === category;
+            return matchSearch && matchCat;
+        });
+
+        if (sort === 'price_low') filtered.sort((a,b) => a.price - b.price);
+        else if (sort === 'price_high') filtered.sort((a,b) => b.price - a.price);
+        else if (sort === 'qty_high') filtered.sort((a,b) => b.quantity - a.quantity);
+        else filtered.sort((a,b) => (b.id||0) - (a.id||0));
+
+        renderCrops(filtered);
+    }
+
+    function renderCrops(crops) {
+        const grid = document.getElementById('cropsGrid');
+        document.getElementById('cropCount').textContent = crops.length + ' crops';
+
+        if (crops.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><span class="e-icon">🔍</span><p>No crops found.<br>Try a different search.</p></div>`;
+            return;
+        }
+
+        grid.innerHTML = crops.map(c => `
+            <div class="crop-card">
+                <div class="crop-header">
+                    <span class="crop-emoji">${getCropEmoji(c.name)}</span>
+                    <span class="crop-badge">Available ✓</span>
+                </div>
+                <div class="crop-name">${c.name}</div>
+                <div class="crop-farmer">🧑‍🌾 ${c.farmerName || 'Farmer'}</div>
+                <div class="crop-info">
+                    <span class="info-pill">📦 ${c.quantity} ${c.unit||'kg'}</span>
+                    ${c.category ? `<span class="info-pill">${c.category}</span>` : ''}
+                </div>
+                <div class="crop-price-row">
+                    <div class="crop-price">₹${c.price}</div>
+                    <div class="crop-unit">per ${c.unit||'kg'}</div>
+                </div>
+                <div class="crop-location">📍 ${c.location || 'Location not specified'}</div>
+                <button class="btn-buy" onclick='openModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>🛒 Buy Now</button>
+            </div>
+        `).join('');
+    }
+
+    function updateStats(crops) {
+        document.getElementById('statTotal').innerHTML = `${crops.length} <span>listings</span>`;
+        const farmers = new Set(crops.map(c => c.farmerName)).size;
+        document.getElementById('statFarmers').innerHTML = `${farmers} <span>sellers</span>`;
+        const prices = crops.map(c => c.price).filter(Boolean);
+        const low = prices.length ? Math.min(...prices) : 0;
+        document.getElementById('statLow').innerHTML = `₹${low} <span>/unit</span>`;
+    }
+
+    // ✅ REAL ORDER SAVING
+    function openModal(crop) {
+        selectedCrop = crop;
+        const totalVal = (crop.price * crop.quantity).toLocaleString('en-IN');
+        document.getElementById('modalDetail').innerHTML = `
+            <div class="modal-row"><span class="label">Crop</span><span class="val">${getCropEmoji(crop.name)} ${crop.name}</span></div>
+            <div class="modal-row"><span class="label">Farmer</span><span class="val">${crop.farmerName || 'N/A'}</span></div>
+            <div class="modal-row"><span class="label">Quantity</span><span class="val">${crop.quantity} ${crop.unit||'kg'}</span></div>
+            <div class="modal-row"><span class="label">Price</span><span class="val">₹${crop.price} / ${crop.unit||'kg'}</span></div>
+            <div class="modal-row"><span class="label">Location</span><span class="val">📍 ${crop.location || 'N/A'}</span></div>
+        `;
+        document.getElementById('modalTotal').textContent = `Total: ₹${totalVal}`;
+        document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('show');
+        selectedCrop = null;
+    }
+
+    async function confirmBuy() {
+        if (!selectedCrop) return;
+        const btn = document.getElementById('confirmBtn');
+        btn.textContent = 'Placing Order...'; btn.disabled = true;
+
+        try {
+            const orderPayload = {
+                cropName: selectedCrop.name,
+                farmerName: selectedCrop.farmerName,
+                quantity: selectedCrop.quantity,
+                price: selectedCrop.price,
+                unit: selectedCrop.unit || 'kg',
+                location: selectedCrop.location || ''
+            };
+
+            const res = await fetch('/api/orders/place', {
+                method: 'POST', headers: authHeaders, body: JSON.stringify(orderPayload)
+            });
+
+            if (!res.ok) throw new Error('Order failed');
+
+            closeModal();
+            showToast(`✅ Order placed for ${selectedCrop.name}! Farmer will contact you soon.`, 'success');
+            loadMyOrders();
+
+            // Update my orders stat
+            const currentOrders = parseInt(document.getElementById('statOrders').textContent) || 0;
+            document.getElementById('statOrders').innerHTML = `${currentOrders + 1} <span>placed</span>`;
+
+        } catch(err) {
+            showToast('❌ Could not place order. Try again.', 'error');
+        } finally {
+            btn.textContent = '✅ Confirm Order'; btn.disabled = false;
+        }
+    }
+
+    // Load my orders
+    async function loadMyOrders() {
+        try {
+            const res = await fetch('/api/orders/my-orders', { headers: authHeaders });
+            const orders = await res.json();
+            document.getElementById('myOrderCount').textContent = orders.length + ' orders';
+            document.getElementById('statOrders').innerHTML = `${orders.length} <span>placed</span>`;
+
+            if (orders.length === 0) {
+                document.getElementById('myOrdersContainer').innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:16px 0;">No orders placed yet. Browse crops above!</p>';
+                return;
+            }
+
+            document.getElementById('myOrdersContainer').innerHTML = orders.map(o => `
+                <div class="order-item">
+                    <div>
+                        <div class="order-crop">${getCropEmoji(o.cropName)} ${o.cropName}</div>
+                        <div class="order-detail">🧑‍🌾 ${o.farmerName} | 📦 ${o.quantity} ${o.unit||'kg'} | 📍 ${o.location||'N/A'}</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="order-total">₹${(o.price * o.quantity).toLocaleString('en-IN')}</div>
+                        <span class="order-badge ${o.status === 'CONFIRMED' ? 'badge-confirmed' : 'badge-pending'}">${o.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('myOrdersContainer').innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Could not load orders.</p>';
+        }
+    }
+
+    document.getElementById('modalOverlay').addEventListener('click', function(e) { if(e.target === this) closeModal(); });
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('sortFilter').addEventListener('change', applyFilters);
+
+    function logout() { localStorage.clear(); window.location.replace('/index.html'); }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = type === 'error' ? 'rgba(254,242,242,0.95)' : 'rgba(220,252,231,0.95)';
+        t.style.color = type === 'error' ? '#dc2626' : '#15803d';
+        t.style.border = type === 'error' ? '1px solid #fca5a5' : '1px solid #86efac';
+        t.style.opacity = '1';
+        setTimeout(() => t.style.opacity = '0', 3500);
+    }
+
+    loadCrops();
+    loadMyOrders();
+</script>
+</body>
+</html>

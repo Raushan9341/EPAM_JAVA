@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Digital Mandi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #22c55e; --dark: #166534; --bg: #f8fafc; }
+        body { margin: 0; font-family: 'Outfit', sans-serif; background-color: var(--bg); color: #333; }
+
+        /* Navbar */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 8%; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--dark); text-decoration: none; }
+        .logout-btn { background: #ef4444; color: white; padding: 8px 20px; border-radius: 10px; text-decoration: none; font-weight: 600; cursor: pointer; border: none; }
+
+        .container { padding: 40px 8%; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; }
+
+        /* Left: Sell Form */
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: var(--dark); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-add { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+
+        /* Right: Market Feed */
+        .market-feed { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .product-list { margin-top: 20px; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .buy-btn { background: var(--dark); color: white; padding: 5px 15px; border-radius: 8px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo">🌾 Digital Mandi</a>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <span id="userDisplay" style="font-weight: 600;">Welcome, User</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h2>Apni Fasal Bechein 🧑‍🌾</h2>
+        <p style="color: #64748b;">Mandi mein apni fasal list karein</p>
+        <input type="text" id="cropName" placeholder="Fasal ka naam (e.g. Gehu/Wheat)">
+        <input type="number" id="cropQty" placeholder="Kitna quintal?">
+        <input type="number" id="cropPrice" placeholder="Dhaam (per quintal)">
+        <button class="btn-add" onclick="addCrop()">Mandi mein Daalein →</button>
+    </div>
+
+    <div class="market-feed">
+        <h2>Live Market 📈</h2>
+        <p style="color: #64748b;">Traders yahan se fasal kharid sakte hain</p>
+        <div id="productList" class="product-list">
+            <div class="product-item">
+                <div><strong>Sarbati Gehu</strong> <br> <small>Qty: 10 Quintal</small></div>
+                <div>₹2400/Q <button class="buy-btn" onclick="alert('Kharidne ki request bhej di gayi hai!')">Buy</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Security Check: Token nahi toh wapas bhago
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (!token) {
+        window.location.href = "index.html";
+    }
+
+    document.getElementById('userDisplay').innerText = "Welcome, " + user;
+
+    // 2. Fasal Add karne ka logic (Abhi ke liye Local)
+    function addCrop() {
+        const name = document.getElementById('cropName').value;
+        const qty = document.getElementById('cropQty').value;
+        const price = document.getElementById('cropPrice').value;
+
+        if(!name || !qty || !price) return alert("Bhai, saari details dalo!");
+
+        const list = document.getElementById('productList');
+        const newItem = document.createElement('div');
+        newItem.className = 'product-item';
+        newItem.innerHTML = `
+            <div><strong>${name}</strong> <br> <small>Qty: ${qty} Quintal</small></div>
+            <div>₹${price}/Q <button class="buy-btn" onclick="alert('Kharidne ki request bhej di gayi hai!')">Buy</button></div>
+        `;
+        list.prepend(newItem);
+
+        // Inputs saaf karo
+        document.getElementById('cropName').value = "";
+        document.getElementById('cropQty').value = "";
+        document.getElementById('cropPrice').value = "";
+
+        alert("Fasal Mandi mein list ho gayi!");
+    }
+
+    // 3. Logout logic
+    function logout() {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard | Digital Mandi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981; --primary-dark: #059669;
+            --dark: #064e3b; --accent: #fbbf24;
+            --text: #0f172a; --muted: #64748b;
+            --light-bg: #f0fdf4; --border: #e2e8f0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; color:var(--text); }
+
+        /* ─── BLOBS ─── */
+        .blob-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+        .blob { position:absolute; border-radius:50%; filter:blur(70px); opacity:0.12; animation:blobFloat 10s ease-in-out infinite; }
+        .blob-1 { width:500px; height:500px; background:#10b981; top:-120px; left:-150px; animation-duration:10s; }
+        .blob-2 { width:350px; height:350px; background:#059669; top:30%; right:-80px; animation-delay:2s; animation-duration:13s; }
+        .blob-3 { width:260px; height:260px; background:#34d399; bottom:10%; left:5%; animation-delay:4s; animation-duration:9s; }
+        .blob-4 { width:300px; height:300px; background:#064e3b; bottom:-80px; right:20%; animation-delay:1s; animation-duration:12s; }
+        .blob-5 { width:200px; height:200px; background:#6ee7b7; top:50%; left:40%; animation-delay:3s; animation-duration:8s; }
+        @keyframes blobFloat {
+            0%,100% { transform:translate(0,0) scale(1); }
+            33% { transform:translate(18px,-28px) scale(1.04); }
+            66% { transform:translate(-14px,18px) scale(0.96); }
+        }
+
+        /* NAVBAR */
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:0 5%; height:65px;
+            background:rgba(255,255,255,0.92); backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(16,185,129,0.15);
+            position:sticky; top:0; z-index:100;
+        }
+        .logo { font-size:1.3rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; }
+        .leaf-d { width:32px;height:32px;background:var(--primary);color:white;border-radius:8px 16px 8px 16px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem; }
+        .nav-right { display:flex; align-items:center; gap:14px; }
+        .nav-user { font-size:0.88rem; color:var(--muted); font-weight:500; }
+        .nav-user span { color:var(--primary); font-weight:700; }
+        .btn-logout { background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; padding:8px 16px; border-radius:10px; font-size:0.85rem; font-weight:600; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-logout:hover { background:#dc2626; color:white; }
+
+        /* LAYOUT */
+        .dashboard { display:grid; grid-template-columns:340px 1fr; gap:24px; padding:28px 5%; max-width:1300px; margin:0 auto; position:relative; z-index:1; }
+
+        /* FORM CARD */
+        .form-card {
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(12px);
+            border-radius:20px; padding:28px;
+            border:1px solid rgba(16,185,129,0.15);
+            box-shadow:0 4px 20px rgba(16,185,129,0.08);
+            height:fit-content; position:sticky; top:90px;
+        }
+        .card-title { font-size:1.1rem; font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+        .card-subtitle { font-size:0.83rem; color:var(--muted); margin-bottom:22px; }
+
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; font-size:0.82rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+
+        .form-input, .form-select {
+            width:100%; padding:12px 14px;
+            border:1.5px solid var(--border); border-radius:11px;
+            font-size:0.9rem; background:rgba(248,250,252,0.8);
+            outline:none; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif; color:var(--text);
+        }
+        .form-input:focus, .form-select:focus { border-color:var(--primary); background:white; box-shadow:0 0 0 3px rgba(16,185,129,0.08); }
+        .input-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+        .btn-add {
+            width:100%; background:var(--primary); color:white;
+            padding:14px; border-radius:12px; border:none;
+            font-size:0.95rem; font-weight:700; cursor:pointer;
+            transition:0.25s; font-family:'Plus Jakarta Sans',sans-serif;
+            margin-top:6px; display:flex; align-items:center; justify-content:center; gap:6px;
+            box-shadow:0 6px 20px rgba(16,185,129,0.3);
+        }
+        .btn-add:hover { background:var(--primary-dark); transform:translateY(-1px); box-shadow:0 8px 24px rgba(16,185,129,0.4); }
+        .btn-add:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
+
+        /* STATS ROW */
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+        .stat-card {
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(10px);
+            border-radius:14px; padding:18px;
+            border:1px solid rgba(16,185,129,0.12);
+            box-shadow:0 2px 12px rgba(16,185,129,0.06);
+        }
+        .stat-card .s-label { font-size:0.78rem; color:var(--muted); font-weight:500; margin-bottom:6px; }
+        .stat-card .s-val { font-size:1.6rem; font-weight:800; color:var(--text); }
+        .stat-card .s-val span { font-size:0.9rem; color:var(--primary); }
+
+        /* SECTION HEADER */
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .section-title { font-size:1rem; font-weight:800; }
+        .crop-count { font-size:0.8rem; color:var(--muted); background:rgba(241,245,249,0.9); padding:4px 10px; border-radius:20px; font-weight:600; }
+
+        /* CROP CARDS */
+        .crops-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:14px; }
+
+        .crop-card {
+            background:rgba(255,255,255,0.9); backdrop-filter:blur(10px);
+            border-radius:16px; padding:18px;
+            border:1px solid rgba(16,185,129,0.12);
+            box-shadow:0 2px 12px rgba(16,185,129,0.06);
+            transition:0.2s; position:relative;
+        }
+        .crop-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.3); }
+
+        .crop-emoji { font-size:2.2rem; margin-bottom:8px; display:block; }
+        .crop-name { font-size:1rem; font-weight:800; margin-bottom:4px; }
+        .crop-meta { font-size:0.78rem; color:var(--muted); margin-bottom:10px; }
+        .crop-price { font-size:1.1rem; font-weight:800; color:var(--primary); }
+        .crop-location { font-size:0.75rem; color:var(--muted); margin-top:4px; display:flex; align-items:center; gap:4px; }
+
+        .crop-badge {
+            position:absolute; top:12px; right:12px;
+            background:#dcfce7; color:#15803d;
+            font-size:0.65rem; font-weight:700;
+            padding:3px 8px; border-radius:20px;
+        }
+
+        /* ✅ DELETE BUTTON */
+        .btn-delete {
+            width:100%; margin-top:12px;
+            background:#fef2f2; color:#dc2626;
+            border:1px solid #fca5a5; border-radius:10px;
+            padding:8px; font-size:0.8rem; font-weight:700;
+            cursor:pointer; transition:0.2s;
+            font-family:'Plus Jakarta Sans',sans-serif;
+            display:flex; align-items:center; justify-content:center; gap:5px;
+        }
+        .btn-delete:hover { background:#dc2626; color:white; border-color:#dc2626; }
+
+        /* ORDERS SECTION */
+        .orders-section {
+            margin-top:28px;
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(12px);
+            border-radius:20px; padding:24px;
+            border:1px solid rgba(16,185,129,0.12);
+        }
+        .order-item {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:14px 0; border-bottom:1px solid rgba(226,232,240,0.7);
+        }
+        .order-item:last-child { border-bottom:none; }
+        .order-crop { font-weight:700; font-size:0.92rem; }
+        .order-trader { font-size:0.8rem; color:var(--muted); margin-top:3px; }
+        .order-badge {
+            padding:4px 12px; border-radius:20px;
+            font-size:0.72rem; font-weight:700;
+        }
+        .badge-pending { background:#fef9c3; color:#854d0e; }
+        .badge-confirmed { background:#dcfce7; color:#15803d; }
+
+        /* EMPTY / LOADING */
+        .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+        .empty-state .e-icon { font-size:3.5rem; margin-bottom:14px; display:block; }
+        .empty-state p { font-size:0.95rem; font-weight:500; }
+        .loading { text-align:center; padding:40px; color:var(--muted); font-size:0.9rem; }
+
+        /* TOAST */
+        #toast {
+            position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+            padding:14px 24px; border-radius:12px; font-weight:600; font-size:0.9rem;
+            z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none;
+            backdrop-filter:blur(10px);
+        }
+
+        @media(max-width:900px) {
+            .dashboard { grid-template-columns:1fr; }
+            .form-card { position:static; }
+            .stats-row { grid-template-columns:1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+    <div class="blob blob-5"></div>
+</div>
+
+<nav>
+    <div class="logo">
+        <div class="leaf-d">D</div>
+        Digital <span style="color:var(--primary)">Mandi</span>
+    </div>
+    <div class="nav-right">
+        <span class="nav-user">🧑‍🌾 Welcome, <span id="navUsername">Farmer</span></span>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard">
+    <!-- LEFT: ADD CROP FORM -->
+    <div class="form-card">
+        <div class="card-title">🌱 List Your Crop</div>
+        <div class="card-subtitle">Show your produce to buyers directly</div>
+
+        <form id="cropForm">
+            <div class="form-group">
+                <label>Crop Name *</label>
+                <input type="text" class="form-input" id="cropName" placeholder="e.g. Tomato, Wheat, Rice" required>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select class="form-select" id="cropCategory">
+                    <option value="">-- Select --</option>
+                    <option>Vegetables</option>
+                    <option>Fruits</option>
+                    <option>Grains</option>
+                    <option>Spices</option>
+                    <option>Pulses</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="input-row">
+                <div class="form-group">
+                    <label>Quantity *</label>
+                    <input type="number" class="form-input" id="cropQty" placeholder="e.g. 50" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select class="form-select" id="cropUnit">
+                        <option value="kg">kg</option>
+                        <option value="quintal">Quintal</option>
+                        <option value="ton">Ton</option>
+                        <option value="piece">Piece</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Price per Unit (₹) *</label>
+                <input type="number" class="form-input" id="cropPrice" placeholder="e.g. 25" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Location / Village</label>
+                <input type="text" class="form-input" id="cropLocation" placeholder="e.g. Ludhiana, Punjab">
+            </div>
+            <button type="submit" class="btn-add" id="addBtn">➕ List Crop</button>
+        </form>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="s-label">Total Listings</div>
+                <div class="s-val" id="statTotal">0 <span>crops</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Total Quantity</div>
+                <div class="s-val" id="statQty">0 <span>units</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Avg. Price</div>
+                <div class="s-val" id="statPrice">₹0 <span>/unit</span></div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <span class="section-title">📦 My Listings</span>
+            <span class="crop-count" id="cropCount">0 crops</span>
+        </div>
+        <div id="cropsContainer">
+            <div class="loading">🌾 Loading your crops...</div>
+        </div>
+
+        <!-- Orders Received -->
+        <div class="orders-section">
+            <div class="section-header">
+                <span class="section-title">📋 Orders Received</span>
+                <span class="crop-count" id="orderCount">0 orders</span>
+            </div>
+            <div id="ordersContainer">
+                <div class="loading">Loading orders...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const emojiMap = {
+        tomato:'🍅', potato:'🥔', onion:'🧅', wheat:'🌾', rice:'🍚',
+        maize:'🌽', corn:'🌽', grapes:'🍇', broccoli:'🥦', spinach:'🥬',
+        chilli:'🌶️', mango:'🥭', banana:'🍌', apple:'🍎', orange:'🍊',
+        garlic:'🧄', carrot:'🥕', pea:'🫛', soybean:'🌱', default:'🌿'
+    };
+    function getCropEmoji(name) {
+        const key = (name||'').toLowerCase().trim();
+        for (const [k, v] of Object.entries(emojiMap)) {
+            if (key.includes(k)) return v;
+        }
+        return emojiMap.default;
+    }
+
+    // ✅ AUTH GUARD — proper JWT check
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    if (!token || !username || role !== 'farmer') {
+        alert('Please login first!');
+        window.location.replace('/index.html');
+    }
+
+    // Extra check: verify token not expired (basic decode)
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+            alert('Session expired! Please login again.');
+            localStorage.clear();
+            window.location.replace('/index.html');
+        }
+    } catch(e) {
+        localStorage.clear();
+        window.location.replace('/index.html');
+    }
+
+    document.getElementById('navUsername').textContent = username;
+
+    const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    };
+
+    // Load crops
+    async function loadCrops() {
+        try {
+            const res = await fetch('/api/crops/all', { headers: authHeaders });
+            if (res.status === 401 || res.status === 403) { logout(); return; }
+            const all = await res.json();
+            const myCrops = all.filter(c => c.farmerName === username);
+            renderCrops(myCrops);
+            updateStats(myCrops);
+        } catch (e) {
+            document.getElementById('cropsContainer').innerHTML =
+                '<div class="empty-state"><span class="e-icon">⚠️</span><p>Could not load crops. Please refresh.</p></div>';
+        }
+    }
+
+    function renderCrops(crops) {
+        const container = document.getElementById('cropsContainer');
+        document.getElementById('cropCount').textContent = crops.length + ' crops';
+
+        if (crops.length === 0) {
+            container.innerHTML = `<div class="empty-state">
+                <span class="e-icon">🌱</span>
+                <p>No listings yet.<br>Add your first crop!</p>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="crops-grid">${
+            crops.map(c => `
+                <div class="crop-card">
+                    <span class="crop-badge">Listed ✓</span>
+                    <span class="crop-emoji">${getCropEmoji(c.name)}</span>
+                    <div class="crop-name">${c.name}</div>
+                    <div class="crop-meta">${c.quantity} ${c.unit||'kg'} available</div>
+                    <div class="crop-price">₹${c.price}<small style="font-size:0.7rem;color:var(--muted);font-weight:500">/${c.unit||'kg'}</small></div>
+                    <div class="crop-location">📍 ${c.location || 'Location not set'}</div>
+                    <button class="btn-delete" onclick="deleteCrop(${c.id}, '${c.name}')">🗑️ Delete Listing</button>
+                </div>
+            `).join('')
+        }</div>`;
+    }
+
+    function updateStats(crops) {
+        document.getElementById('statTotal').innerHTML = `${crops.length} <span>crops</span>`;
+        const totalQty = crops.reduce((s, c) => s + (c.quantity || 0), 0);
+        const avgPrice = crops.length ? Math.round(crops.reduce((s,c) => s+(c.price||0),0)/crops.length) : 0;
+        document.getElementById('statQty').innerHTML = `${totalQty} <span>units</span>`;
+        document.getElementById('statPrice').innerHTML = `₹${avgPrice} <span>/unit</span>`;
+    }
+
+    // ✅ DELETE CROP
+    async function deleteCrop(id, name) {
+        if (!confirm(`Delete "${name}" from your listings?`)) return;
+        try {
+            const res = await fetch(`/api/crops/delete/${id}`, {
+                method: 'DELETE', headers: authHeaders
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('✅ ' + name + ' removed from listings!', 'success');
+                loadCrops();
+            } else {
+                showToast('❌ ' + data.message, 'error');
+            }
+        } catch(e) {
+            showToast('❌ Could not delete. Try again.', 'error');
+        }
+    }
+
+    // Load orders received
+    async function loadOrders() {
+        try {
+            const res = await fetch('/api/orders/received', { headers: authHeaders });
+            if (!res.ok) { document.getElementById('ordersContainer').innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Could not load orders.</p>'; return; }
+            const orders = await res.json();
+            document.getElementById('orderCount').textContent = orders.length + ' orders';
+
+            if (orders.length === 0) {
+                document.getElementById('ordersContainer').innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:16px 0;">No orders received yet.</p>';
+                return;
+            }
+
+            document.getElementById('ordersContainer').innerHTML = orders.map(o => `
+                <div class="order-item">
+                    <div>
+                        <div class="order-crop">${getCropEmoji(o.cropName)} ${o.cropName} — ${o.quantity} ${o.unit||'kg'} @ ₹${o.price}</div>
+                        <div class="order-trader">🏪 Trader: ${o.traderName} | 📍 ${o.location||'N/A'}</div>
+                    </div>
+                    <span class="order-badge ${o.status === 'CONFIRMED' ? 'badge-confirmed' : 'badge-pending'}">${o.status}</span>
+                </div>
+            `).join('');
+        } catch(e) {
+            document.getElementById('ordersContainer').innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Could not load orders.</p>';
+        }
+    }
+
+    // Add crop
+    document.getElementById('cropForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('addBtn');
+        btn.textContent = 'Adding...'; btn.disabled = true;
+
+        const crop = {
+            name: document.getElementById('cropName').value.trim(),
+            category: document.getElementById('cropCategory').value,
+            quantity: parseFloat(document.getElementById('cropQty').value),
+            price: parseFloat(document.getElementById('cropPrice').value),
+            unit: document.getElementById('cropUnit').value,
+            location: document.getElementById('cropLocation').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/crops/add', {
+                method: 'POST', headers: authHeaders, body: JSON.stringify(crop)
+            });
+            if (!res.ok) throw new Error('Could not add crop');
+            showToast('✅ ' + crop.name + ' listed successfully!', 'success');
+            this.reset();
+            loadCrops();
+        } catch (err) {
+            showToast('❌ Error: ' + err.message, 'error');
+        } finally {
+            btn.textContent = '➕ List Crop'; btn.disabled = false;
+        }
+    });
+
+    function logout() {
+        localStorage.clear();
+        window.location.replace('/index.html');
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = type === 'error' ? 'rgba(254,242,242,0.95)' : 'rgba(220,252,231,0.95)';
+        t.style.color = type === 'error' ? '#dc2626' : '#15803d';
+        t.style.border = type === 'error' ? '1px solid #fca5a5' : '1px solid #86efac';
+        t.style.opacity = '1';
+        setTimeout(() => t.style.opacity = '0', 3000);
+    }
+
+    loadCrops();
+    loadOrders();
+</script>
+</body>
+</html>

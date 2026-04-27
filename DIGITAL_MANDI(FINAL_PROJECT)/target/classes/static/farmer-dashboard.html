@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard | Digital Mandi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981; --primary-dark: #059669;
+            --dark: #064e3b; --accent: #fbbf24;
+            --text: #0f172a; --muted: #64748b;
+            --light-bg: #f0fdf4; --border: #e2e8f0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; color:var(--text); }
+
+        .blob-bg { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+        .blob { position:absolute; border-radius:50%; filter:blur(70px); opacity:0.12; animation:blobFloat 10s ease-in-out infinite; }
+        .blob-1 { width:500px; height:500px; background:#10b981; top:-120px; left:-150px; }
+        .blob-2 { width:350px; height:350px; background:#059669; top:30%; right:-80px; animation-delay:2s; animation-duration:13s; }
+        .blob-3 { width:260px; height:260px; background:#34d399; bottom:10%; left:5%; animation-delay:4s; animation-duration:9s; }
+        @keyframes blobFloat {
+            0%,100% { transform:translate(0,0) scale(1); }
+            33% { transform:translate(18px,-28px) scale(1.04); }
+            66% { transform:translate(-14px,18px) scale(0.96); }
+        }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:0 5%; height:65px;
+            background:rgba(255,255,255,0.92); backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(16,185,129,0.15);
+            position:sticky; top:0; z-index:100;
+        }
+        .logo { font-size:1.3rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px; }
+        .leaf-d { width:32px;height:32px;background:var(--primary);color:white;border-radius:8px 16px 8px 16px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem; }
+        .nav-right { display:flex; align-items:center; gap:14px; }
+        .nav-user { font-size:0.88rem; color:var(--muted); font-weight:500; }
+        .btn-logout { background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; padding:8px 16px; border-radius:10px; font-size:0.85rem; font-weight:600; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-logout:hover { background:#dc2626; color:white; }
+
+        /* NEW ORDER ALERT BANNER */
+        .new-order-banner {
+            background:linear-gradient(135deg, #10b981, #059669);
+            color:white; padding:12px 5%; font-weight:700;
+            font-size:0.9rem; text-align:center;
+            display:none; cursor:pointer; position:relative; z-index:99;
+            animation:pulse 2s ease-in-out infinite;
+        }
+        .new-order-banner.show { display:block; }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.85;} }
+
+        .dashboard { display:grid; grid-template-columns:340px 1fr; gap:24px; padding:28px 5%; max-width:1300px; margin:0 auto; position:relative; z-index:1; }
+
+        .form-card {
+            background:rgba(255,255,255,0.88); backdrop-filter:blur(12px);
+            border-radius:20px; padding:28px;
+            border:1px solid rgba(16,185,129,0.15);
+            box-shadow:0 4px 20px rgba(16,185,129,0.08);
+            height:fit-content; position:sticky; top:90px;
+        }
+        .form-title { font-weight:800; font-size:1rem; margin-bottom:18px; }
+        .form-group { margin-bottom:14px; }
+        .form-label { font-size:0.8rem; font-weight:600; margin-bottom:5px; display:block; color:var(--muted); }
+        .form-input, .form-select {
+            width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:11px;
+            outline:none; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.88rem;
+            background:rgba(248,250,252,0.8); color:var(--text);
+        }
+        .form-input:focus, .form-select:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(16,185,129,0.1); }
+        .btn-add { width:100%; background:var(--primary); color:white; padding:13px; border-radius:12px; border:none; font-weight:700; cursor:pointer; margin-top:6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; transition:0.2s; box-shadow:0 4px 12px rgba(16,185,129,0.25); }
+        .btn-add:hover { background:var(--primary-dark); }
+        .btn-add:disabled { opacity:0.7; cursor:not-allowed; }
+
+        /* PHONE NUMBER FIELD */
+        .phone-note { font-size:0.75rem; color:var(--muted); margin-top:4px; font-style:italic; }
+
+        .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+        .stat-card { background:rgba(255,255,255,0.88); backdrop-filter:blur(10px); border-radius:14px; padding:18px; border:1px solid rgba(16,185,129,0.12); box-shadow:0 2px 12px rgba(16,185,129,0.06); }
+        .stat-card .s-label { font-size:0.78rem; color:var(--muted); font-weight:500; margin-bottom:6px; }
+        .stat-card .s-val { font-size:1.6rem; font-weight:800; color:var(--text); }
+
+        .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+        .section-title { font-weight:800; font-size:1rem; }
+        .crop-count-pill { font-size:0.8rem; color:var(--muted); background:rgba(241,245,249,0.9); padding:4px 10px; border-radius:20px; font-weight:600; }
+
+        .crops-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:14px; margin-bottom:26px; }
+        .crop-card { background:rgba(255,255,255,0.9); border-radius:16px; padding:18px; border:1px solid rgba(16,185,129,0.12); box-shadow:0 2px 8px rgba(16,185,129,0.06); position:relative; }
+        .crop-card-name { font-weight:800; font-size:1rem; margin-bottom:4px; }
+        .crop-card-qty { font-size:0.8rem; color:var(--muted); margin-bottom:6px; }
+        .crop-card-price { color:var(--primary); font-weight:800; font-size:1.15rem; margin-bottom:12px; }
+        .btn-delete { width:100%; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; padding:8px; border-radius:10px; cursor:pointer; font-weight:700; font-size:0.82rem; font-family:'Plus Jakarta Sans',sans-serif; transition:0.2s; }
+        .btn-delete:hover { background:#dc2626; color:white; }
+
+        /* ORDERS SECTION */
+        .orders-section { background:rgba(255,255,255,0.88); backdrop-filter:blur(12px); border-radius:20px; padding:24px; border:1px solid rgba(16,185,129,0.12); box-shadow:0 2px 12px rgba(16,185,129,0.06); }
+
+        /* NEW ORDER CARD - highlighted */
+        .order-item { padding:16px; border-radius:14px; margin-bottom:12px; border:1px solid var(--border); background:white; transition:0.2s; }
+        .order-item.new-order { border-color:#fbbf24; background:#fffbeb; animation:highlightNew 1.5s ease-out forwards; }
+        @keyframes highlightNew { 0%{box-shadow:0 0 0 4px rgba(251,191,36,0.4);} 100%{box-shadow:none;} }
+        .order-item.confirmed { border-color:#bbf7d0; background:#f0fdf4; }
+
+        .order-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+        .order-crop-name { font-weight:800; font-size:0.95rem; }
+        .order-qty { font-size:0.82rem; color:var(--muted); margin-top:2px; }
+        .order-badge { padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+        .badge-pending { background:#fef9c3; color:#854d0e; }
+        .badge-confirmed { background:#dcfce7; color:#15803d; }
+        .badge-rejected { background:#fee2e2; color:#dc2626; }
+
+        .order-mid { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+        .order-info-chip { background:rgba(241,245,249,0.9); font-size:0.75rem; font-weight:600; padding:4px 10px; border-radius:20px; color:var(--text); }
+
+        /* TRADER PHONE - shown after confirm */
+        .trader-phone-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; font-size:0.82rem; color:#1d4ed8; font-weight:700; display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+
+        .order-btns { display:flex; gap:8px; }
+        .btn-confirm-order { flex:2; background:var(--primary); color:white; border:none; padding:9px 14px; border-radius:10px; font-size:0.82rem; font-weight:700; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-confirm-order:hover { background:var(--primary-dark); transform:scale(1.02); }
+        .btn-reject-order { flex:1; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; padding:9px 14px; border-radius:10px; font-size:0.82rem; font-weight:700; cursor:pointer; transition:0.2s; font-family:'Plus Jakarta Sans',sans-serif; }
+        .btn-reject-order:hover { background:#dc2626; color:white; }
+
+        .order-total-amt { font-weight:800; color:var(--primary); font-size:0.95rem; }
+
+        /* TOTAL EARNINGS CARD */
+        .earnings-card { background:linear-gradient(135deg, #10b981, #059669); color:white; border-radius:14px; padding:18px; border:none; box-shadow:0 4px 16px rgba(16,185,129,0.3); }
+        .earnings-card .s-label { font-size:0.78rem; opacity:0.9; margin-bottom:6px; }
+        .earnings-card .s-val { font-size:1.6rem; font-weight:800; }
+
+        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); padding:14px 24px; border-radius:12px; font-weight:600; font-size:0.9rem; z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none; backdrop-filter:blur(10px); min-width:260px; text-align:center; }
+
+        .empty-msg { text-align:center; padding:30px 20px; color:var(--muted); font-size:0.88rem; }
+
+        @media(max-width:900px) {
+            .dashboard { grid-template-columns:1fr; }
+            .form-card { position:static; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="blob-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<!-- NEW ORDER ALERT BANNER -->
+<div class="new-order-banner" id="newOrderBanner" onclick="scrollToOrders()">
+    🔔 New order received! Tap to view ⬇️
+</div>
+
+<nav>
+    <div class="logo"><div class="leaf-d">D</div>Digital <span style="color:var(--primary)">Mandi</span></div>
+    <div class="nav-right">
+        <span class="nav-user">🧑‍🌾 Welcome, <span id="navUsername">Farmer</span></span>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="dashboard">
+    <!-- LEFT: FORM -->
+    <div class="form-card">
+        <div class="form-title">🌱 List Your Crop</div>
+        <form id="cropForm">
+            <div class="form-group">
+                <label class="form-label">Crop Name *</label>
+                <input type="text" class="form-input" id="cropName" placeholder="e.g. Wheat" required>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Qty *</label>
+                    <input type="number" class="form-input" id="cropQty" min="1" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Unit</label>
+                    <select class="form-select" id="cropUnit">
+                        <option>kg</option><option>quintal</option><option>ton</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Price per unit (₹) *</label>
+                <input type="number" class="form-input" id="cropPrice" min="1" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="cropCategory">
+                    <option value="">Select Category</option>
+                    <option>Vegetables</option><option>Fruits</option><option>Grains</option>
+                    <option>Spices</option><option>Pulses</option><option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-input" id="cropLocation" placeholder="Village / City name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">📞 Your Phone Number *</label>
+                <input type="tel" class="form-input" id="cropPhone" placeholder="e.g. 9876543210" required>
+                <div class="phone-note">Shown to trader only after order is confirmed</div>
+            </div>
+            <button type="submit" class="btn-add" id="addBtn">➕ List Crop</button>
+        </form>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="s-label">Total Listings</div>
+                <div class="s-val" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Pending Orders</div>
+                <div class="s-val" id="statPending" style="color:#d97706;">0</div>
+            </div>
+            <div class="earnings-card">
+                <div class="s-label">Confirmed Earnings</div>
+                <div class="s-val" id="statEarnings">₹0</div>
+            </div>
+        </div>
+
+        <!-- MY LISTINGS -->
+        <div class="section-header">
+            <span class="section-title">📦 My Listings</span>
+            <span class="crop-count-pill" id="cropCountPill">0 crops</span>
+        </div>
+        <div id="cropsContainer"><div class="empty-msg">No crops listed yet.</div></div>
+
+        <!-- ORDERS RECEIVED -->
+        <div class="orders-section" id="ordersSection">
+            <div class="section-header">
+                <span class="section-title">📋 Orders Received</span>
+                <span class="crop-count-pill" id="orderCountPill">0 orders</span>
+            </div>
+            <div id="ordersContainer"><div class="empty-msg">No orders yet.</div></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    if (!token || role !== 'farmer') {
+        alert('Please login first!');
+        window.location.replace('/index.html');
+    }
+
+    document.getElementById('navUsername').textContent = username;
+    const authHeaders = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+    let previousOrderCount = 0;
+    let previousPendingIds = new Set();
+
+    // ─── LOAD CROPS ───
+    async function loadCrops() {
+        try {
+            const res = await fetch('/api/crops/all', { headers: authHeaders });
+            if (!res.ok) throw new Error();
+            const all = await res.json();
+            const myCrops = (Array.isArray(all) ? all : []).filter(c => c.farmerName === username);
+            renderCrops(myCrops);
+        } catch (e) { console.error("Error loading crops"); }
+    }
+
+    function renderCrops(crops) {
+        document.getElementById('cropCountPill').textContent = crops.length + ' crops';
+        document.getElementById('statTotal').textContent = crops.length;
+
+        if (crops.length === 0) {
+            document.getElementById('cropsContainer').innerHTML = '<div class="empty-msg">No crops listed yet. Add your first crop! 🌱</div>';
+            return;
+        }
+
+        document.getElementById('cropsContainer').innerHTML = `
+            <div class="crops-grid">
+                ${crops.map(c => `
+                    <div class="crop-card">
+                        <div class="crop-card-name">${c.name}</div>
+                        <div class="crop-card-qty">📦 ${c.quantity} ${c.unit} available</div>
+                        ${c.location ? `<div class="crop-card-qty">📍 ${c.location}</div>` : ''}
+                        <div class="crop-card-price">₹${c.price} / ${c.unit}</div>
+                        <button class="btn-delete" onclick="deleteCrop(${c.id})">🗑️ Delete</button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // ─── DELETE CROP ───
+    async function deleteCrop(id) {
+        if (!confirm("Delete this listing?")) return;
+        try {
+            const res = await fetch(`/api/crops/delete/${id}`, { method: 'DELETE', headers: authHeaders });
+            if (res.ok) {
+                showToast("✅ Crop removed!", "success");
+                loadCrops();
+            } else { showToast("❌ Could not delete.", "error"); }
+        } catch(e) { showToast("❌ Error deleting crop.", "error"); }
+    }
+
+    // ─── LOAD ORDERS ───
+    async function loadOrders() {
+        try {
+            const res = await fetch('/api/orders/received', { headers: authHeaders });
+            if (!res.ok) throw new Error();
+            const orders = await res.json();
+            const safeOrders = Array.isArray(orders) ? orders : [];
+
+            // Calculate stats
+            const pending = safeOrders.filter(o => o.status === 'PENDING');
+            const confirmed = safeOrders.filter(o => o.status === 'CONFIRMED');
+            const earnings = confirmed.reduce((sum, o) => sum + (o.price * o.quantity), 0);
+
+            document.getElementById('statPending').textContent = pending.length;
+            document.getElementById('statEarnings').textContent = '₹' + earnings.toLocaleString('en-IN');
+            document.getElementById('orderCountPill').textContent = safeOrders.length + ' orders';
+
+            // Detect NEW pending orders & show banner
+            const newPendingIds = new Set(pending.map(o => o.id));
+            const hasNew = pending.some(o => !previousPendingIds.has(o.id)) && previousPendingIds.size > 0;
+            if (hasNew || (pending.length > 0 && previousOrderCount === 0)) {
+                document.getElementById('newOrderBanner').classList.add('show');
+                setTimeout(() => document.getElementById('newOrderBanner').classList.remove('show'), 8000);
+            }
+            previousPendingIds = newPendingIds;
+            previousOrderCount = safeOrders.length;
+
+            renderOrders(safeOrders);
+        } catch(e) {
+            document.getElementById('ordersContainer').innerHTML = '<div class="empty-msg" style="color:#dc2626;">⚠️ Could not load orders.</div>';
+        }
+    }
+
+    function renderOrders(orders) {
+        if (orders.length === 0) {
+            document.getElementById('ordersContainer').innerHTML = '<div class="empty-msg">No orders received yet. 📭</div>';
+            return;
+        }
+
+        // Sort: PENDING first, then CONFIRMED
+        const sorted = [...orders].sort((a,b) => {
+            if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+            if (b.status === 'PENDING' && a.status !== 'PENDING') return 1;
+            return (b.id||0) - (a.id||0);
+        });
+
+        document.getElementById('ordersContainer').innerHTML = sorted.map(o => {
+            const total = (o.price * o.quantity).toLocaleString('en-IN');
+            const isPending = o.status === 'PENDING';
+            const isConfirmed = o.status === 'CONFIRMED';
+
+            return `
+                <div class="order-item ${isPending ? 'new-order' : isConfirmed ? 'confirmed' : ''}">
+                    <div class="order-top">
+                        <div>
+                            <div class="order-crop-name">🌾 ${o.cropName} — ${o.quantity} ${o.unit||'kg'}</div>
+                            <div class="order-qty">🏪 Trader: <strong>${o.traderName}</strong></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="order-total-amt">₹${total}</div>
+                            <span class="order-badge ${isConfirmed ? 'badge-confirmed' : o.status === 'REJECTED' ? 'badge-rejected' : 'badge-pending'}">${o.status}</span>
+                        </div>
+                    </div>
+                    <div class="order-mid">
+                        <span class="order-info-chip">📍 ${o.location||'N/A'}</span>
+                        <span class="order-info-chip">₹${o.price} / ${o.unit||'kg'}</span>
+                        ${o.orderDate ? `<span class="order-info-chip">🕐 ${new Date(o.orderDate).toLocaleDateString('en-IN')}</span>` : ''}
+                    </div>
+
+                    ${isConfirmed && o.traderPhone ? `
+                        <div class="trader-phone-box">📞 Trader Phone: ${o.traderPhone}</div>
+                    ` : isConfirmed ? `
+                        <div class="trader-phone-box">✅ Confirmed — Arrange pickup with trader</div>
+                    ` : ''}
+
+                    ${isPending ? `
+                        <div class="order-btns">
+                            <button class="btn-confirm-order" onclick="confirmOrder(${o.id})">✅ Confirm Order</button>
+                            <button class="btn-reject-order" onclick="rejectOrder(${o.id})">✗ Reject</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ─── CONFIRM ORDER ───
+    async function confirmOrder(id) {
+        try {
+            const res = await fetch(`/api/orders/confirm/${id}`, { method: 'PUT', headers: authHeaders });
+            if (res.ok) {
+                showToast("🎉 Order Confirmed! Trader will be notified.", "success");
+                loadOrders();
+            } else {
+                showToast("❌ Could not confirm order.", "error");
+            }
+        } catch(e) { showToast("❌ Error confirming order.", "error"); }
+    }
+
+    // ─── REJECT ORDER ───
+    async function rejectOrder(id) {
+        if (!confirm("Reject this order?")) return;
+        try {
+            const res = await fetch(`/api/orders/reject/${id}`, { method: 'PUT', headers: authHeaders });
+            if (res.ok) {
+                showToast("Order rejected.", "success");
+                loadOrders();
+            } else {
+                // If reject endpoint doesn't exist yet, show friendly message
+                showToast("❌ Reject not available. Contact trader.", "error");
+            }
+        } catch(e) { showToast("❌ Error rejecting order.", "error"); }
+    }
+
+    // ─── ADD CROP FORM ───
+    document.getElementById('cropForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('addBtn');
+        btn.textContent = 'Listing...'; btn.disabled = true;
+
+        const phoneVal = document.getElementById('cropPhone').value.trim();
+        if (!phoneVal || phoneVal.length < 10) {
+            showToast("⚠️ Please enter a valid phone number!", "error");
+            btn.textContent = '➕ List Crop'; btn.disabled = false;
+            return;
+        }
+
+        const crop = {
+            name: document.getElementById('cropName').value.trim(),
+            quantity: parseFloat(document.getElementById('cropQty').value),
+            price: parseFloat(document.getElementById('cropPrice').value),
+            unit: document.getElementById('cropUnit').value,
+            category: document.getElementById('cropCategory').value || null,
+            location: document.getElementById('cropLocation').value.trim(),
+            phone: phoneVal
+        };
+
+        try {
+            const res = await fetch('/api/crops/add', {
+                method: 'POST', headers: authHeaders, body: JSON.stringify(crop)
+            });
+            if (res.ok) {
+                showToast("✅ Crop listed successfully!", "success");
+                this.reset();
+                loadCrops();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showToast("❌ " + (err.message || "Could not list crop."), "error");
+            }
+        } catch(e) { showToast("❌ Network error. Try again.", "error"); }
+        finally { btn.textContent = '➕ List Crop'; btn.disabled = false; }
+    });
+
+    function scrollToOrders() {
+        document.getElementById('ordersSection').scrollIntoView({ behavior:'smooth' });
+        document.getElementById('newOrderBanner').classList.remove('show');
+    }
+
+    function logout() { localStorage.clear(); window.location.replace('/index.html'); }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = type === 'success' ? 'rgba(220,252,231,0.95)' : 'rgba(254,242,242,0.95)';
+        t.style.color = type === 'success' ? '#15803d' : '#dc2626';
+        t.style.border = type === 'success' ? '1px solid #86efac' : '1px solid #fca5a5';
+        t.style.opacity = '1';
+        setTimeout(() => t.style.opacity = '0', 3500);
+    }
+
+    // ─── AUTO REFRESH every 20s (check new orders) ───
+    setInterval(loadOrders, 20000);
+
+    loadCrops();
+    loadOrders();
+</script>
+</body>
+</html>
